@@ -71,6 +71,35 @@ Each operation forms a **node**, and edges show **data dependencies**.
 
 ---
 
+# DAG and Shuffling in Apache Spark
+
+## DAG (Directed Acyclic Graph)
+
+### Definition
+The **DAG** represents the logical sequence of transformations and their dependencies in Spark. It's a blueprint that Spark creates before executing jobs, showing how operations are grouped into **stages** for execution.
+
+### Components of DAG
+- **Nodes**: Represent RDDs or DataFrames
+- **Edges**: Represent transformations (dependencies)
+- **Stages**: Groups of tasks that can run in parallel
+- **Jobs**: Triggered by actions, composed of multiple stages
+
+### DAG Creation Process
+1. **Transformations** build up the logical plan
+2. **Actions** trigger DAG creation
+3. **Catalyst optimizer** optimizes the plan (for DataFrames/SQL)
+4. **DAG Scheduler** breaks it into stages
+5. **Task Scheduler** executes individual tasks
+
+### Example DAG Flow
+```scala
+val lines = sc.textFile("input.txt")         // Stage 1: Read
+val words = lines.flatMap(_.split(" "))      // Stage 1: FlatMap  
+val pairs = words.map(word => (word, 1))     // Stage 1: Map
+val counts = pairs.reduceByKey(_ + _)        // Stage 2: ReduceByKey (shuffle)
+counts.saveAsTextFile("output")              // Stage 3: Save
+```
+
 ## ✅ Summary
 
 - DAG = **Directed Acyclic Graph** of transformations.  

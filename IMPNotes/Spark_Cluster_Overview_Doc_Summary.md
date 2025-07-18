@@ -202,3 +202,103 @@ Then:
 - **Executor parallelism:** Number of parallel tasks equals number of cores assigned.
 
 ---
+
+# 🚀 Apache Spark: Driver, Executors & RPC Explained
+
+---
+
+## 🧠 Overview of Spark Architecture
+
+Apache Spark is a distributed data processing framework. Its core components are:
+
+- **Driver Program**: Coordinates the execution of Spark jobs.
+- **Executors**: Run the actual tasks on the worker nodes.
+- **Cluster Manager**: Allocates resources to applications.
+
+---
+
+## 🖥️ Spark Driver
+
+### What It Does:
+- Schedules tasks across executors.
+- Maintains metadata, stages, and job progress.
+- Collects results from executors.
+
+### Key Requirements:
+- Must be **reachable** from all worker nodes.
+- Must be **network addressable** (accessible via IP or hostname).
+- Should be **close to executors**, ideally on the **same local network (LAN)**.
+
+### Configuration:
+```bash
+spark.driver.host=<driver_host>
+spark.driver.port=<driver_port>
+```
+
+## ⚙️ Spark Executors
+
+### What They Do:
+- Run the actual tasks as instructed by the driver.
+- Store data in memory or disk for shuffle or caching.
+- Communicate with the driver during the job lifecycle.
+
+---
+
+## 📡 Network Requirements
+
+- Executors **initiate connections** to the driver.
+- The driver must stay **running and network-accessible** for the full duration of the job.
+- If the driver is far from executors (e.g., in another data center), **performance and stability suffer**.
+
+---
+
+## 🌐 Remote Procedure Call (RPC) in Spark
+
+### What is RPC?
+> A **Remote Procedure Call (RPC)** lets a program call a function on another machine as if it were local.
+
+### Why RPC Matters in Spark:
+If you're submitting jobs from a remote location (e.g., a web UI, script, or another service), **don’t run the driver remotely**.
+
+Instead:
+1. Run the **Spark driver near the cluster**.
+2. Use **RPC (or HTTP APIs like Livy)** to communicate with the driver remotely.
+
+---
+
+### ✅ Benefits of RPC Approach:
+
+| Without RPC | With RPC |
+|-------------|----------|
+| Driver is far from executors → High latency | Driver stays near executors |
+| Risk of connection issues | Reliable and fast execution |
+| Slower scheduling and job performance | Efficient task coordination |
+
+---
+
+## 📦 Tools that Use RPC with Spark
+
+- **Apache Livy**: A REST API for submitting jobs to Spark clusters.
+- **Custom RPC Clients**: Apps (e.g., Python, Java, Node.js) that send job definitions to a running driver.
+
+---
+
+## 🧾 Summary Table
+
+| Component | Role | Best Practice |
+|----------|------|----------------|
+| **Driver** | Coordinates jobs | Run close to workers |
+| **Executors** | Run tasks | Connect to driver |
+| **RPC** | Remote communication method | Use to control driver remotely |
+| **Remote Client** | External system | Talk to driver via RPC/API |
+
+---
+
+## 📌 Key Takeaways
+
+- Spark driver must be **reachable and close** to executors.
+- Using **RPC** allows remote systems to **control Spark jobs efficiently**.
+- Never run a driver far from worker nodes — use **remote submission methods** instead.
+
+---
+
